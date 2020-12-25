@@ -73,7 +73,7 @@ class AssetLoadingTask implements AsyncTask<Void> {
 			}
 		} else {
 			asyncLoader.loadAsync(manager, assetDesc.fileName, resolve(loader, assetDesc), assetDesc.params);
-			asyncDone = true;
+			asyncDone = true; // TODO check: need?
 		}
 		return null;
 	}
@@ -157,5 +157,9 @@ class AssetLoadingTask implements AsyncTask<Void> {
 				if (type == array.get(j).type && fn.equals(array.get(j).fileName)) array.removeIndex(j);
 		}
 		array.ordered = ordered;
+	}
+
+	public boolean hasDependencies() {
+		return loader.hasDependencies();
 	}
 }

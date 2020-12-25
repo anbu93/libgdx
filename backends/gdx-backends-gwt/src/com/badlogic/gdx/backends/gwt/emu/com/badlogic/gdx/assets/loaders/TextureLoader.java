@@ -28,10 +28,15 @@ import com.badlogic.gdx.graphics.Texture.TextureWrap;
 import com.badlogic.gdx.graphics.TextureData;
 import com.badlogic.gdx.graphics.glutils.FileTextureData;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.ObjectMap;
 
 public class TextureLoader extends AsynchronousAssetLoader<Texture, TextureLoader.TextureParameter> {
-	TextureData data;
-	Texture texture;
+	static public class TextureLoaderInfo {
+		String filename;
+		TextureData data;
+		Texture texture;
+	}
+	ObjectMap<String, TextureLoaderInfo> infoMap = new ObjectMap<String, TextureLoaderInfo>();
 
 	public TextureLoader (FileHandleResolver resolver) {
 		super(resolver);
@@ -39,40 +44,45 @@ public class TextureLoader extends AsynchronousAssetLoader<Texture, TextureLoade
 
 	@Override
 	public void loadAsync (AssetManager manager, String fileName, FileHandle fileHandle, TextureParameter parameter) {
+		if (!infoMap.containsKey(fileName)) infoMap.put(fileName, new TextureLoaderInfo());
+		TextureLoaderInfo info = infoMap.get(fileName);
 		if (parameter == null || (parameter != null && parameter.textureData == null)) {
 			Pixmap pixmap = null;
 			Format format = null;
 			boolean genMipMaps = false;
-			texture = null;
+			info.texture = null;
 
 			if (parameter != null) {
 				format = parameter.format;
 				genMipMaps = parameter.genMipMaps;
-				texture = parameter.texture;
+				info.texture = parameter.texture;
 			}
 
 			FileHandle handle = resolve(fileName);
 			pixmap = new Pixmap(handle);
-			data = new FileTextureData(handle, pixmap, format, genMipMaps);
+			info.data = new FileTextureData(handle, pixmap, format, genMipMaps);
 		} else {
-			data = parameter.textureData;
-			if (!data.isPrepared()) data.prepare();
-			texture = parameter.texture;
+			info.data = parameter.textureData;
+			if (!info.data.isPrepared()) info.data.prepare();
+			info.texture = parameter.texture;
 		}
 	}
 
 	@Override
 	public Texture loadSync (AssetManager manager, String fileName, FileHandle fileHandle, TextureParameter parameter) {
-		Texture texture = this.texture;
+		TextureLoaderInfo info = infoMap.get(fileName);
+		if (info == null) return null;
+		Texture texture = info.texture;
 		if (texture != null) {
-			texture.load(data);
+			texture.load(info.data);
 		} else {
-			texture = new Texture(data);
+			texture = new Texture(info.data);
 		}
 		if (parameter != null) {
 			texture.setFilter(parameter.minFilter, parameter.magFilter);
 			texture.setWrap(parameter.wrapU, parameter.wrapV);
 		}
+		infoMap.remove(fileName);
 		return texture;
 	}
 

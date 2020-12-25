@@ -50,6 +50,11 @@ public class SkinLoader extends AsynchronousAssetLoader<Skin, SkinLoader.SkinPar
 	}
 
 	@Override
+	public boolean hasDependencies() {
+		return true;
+	}
+
+	@Override
 	public void loadAsync (AssetManager manager, String fileName, FileHandle file, SkinParameter parameter) {
 	}
 

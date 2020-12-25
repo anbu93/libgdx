@@ -83,6 +83,11 @@ public abstract class BaseTmxMapLoader<P extends BaseTmxMapLoader.Parameters> ex
 		return getDependencyAssetDescriptors(tmxFile, textureParameter);
 	}
 
+	@Override
+	public boolean hasDependencies() {
+		return true;
+	}
+
 	protected abstract Array<AssetDescriptor> getDependencyAssetDescriptors (FileHandle tmxFile, TextureLoader.TextureParameter textureParameter);
 
 	/**

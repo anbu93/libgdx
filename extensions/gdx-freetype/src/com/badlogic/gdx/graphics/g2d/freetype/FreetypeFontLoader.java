@@ -48,4 +48,9 @@ public class FreetypeFontLoader extends AsynchronousAssetLoader<BitmapFont, Free
 		deps.add(new AssetDescriptor<FreeTypeFontGenerator>(parameter.fontFileName + ".gen", FreeTypeFontGenerator.class));
 		return deps;
 	}
+
+	@Override
+	public boolean hasDependencies() {
+		return true;
+	}
 }

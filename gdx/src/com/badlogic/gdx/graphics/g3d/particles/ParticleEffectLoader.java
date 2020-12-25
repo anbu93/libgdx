@@ -83,7 +83,11 @@ public class ParticleEffectLoader extends
 		}
 
 		return descriptors;
+	}
 
+	@Override
+	public boolean hasDependencies() {
+		return true;
 	}
 
 	/** Saves the effect to the given file contained in the passed in parameter. */

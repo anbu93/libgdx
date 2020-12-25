@@ -105,6 +105,11 @@ public class PolygonRegionLoader extends SynchronousAssetLoader<PolygonRegion, P
 		return null;
 	}
 
+	@Override
+	public boolean hasDependencies() { //TODO check: may be not worked
+		return true;
+	}
+
 	/** Loads a PolygonRegion from a PSH (Polygon SHape) file. The PSH file format defines the polygon vertices before
 	 * triangulation:
 	 * <p>

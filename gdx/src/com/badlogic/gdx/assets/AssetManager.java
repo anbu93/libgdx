@@ -509,7 +509,7 @@ public class AssetManager implements Disposable {
 
 	/** Removes a task from the loadQueue and adds it to the task stack. If the asset is already loaded (which can happen if it was
 	 * a dependency of a previously loaded asset) its reference count will be increased. */
-	private void nextTask () {
+	void nextTask () {
 		AssetDescriptor assetDesc = loadQueue.removeIndex(0);
 
 		// if the asset not meant to be reloaded and is already loaded, increase its reference count
@@ -530,7 +530,7 @@ public class AssetManager implements Disposable {
 	}
 
 	/** Adds a {@link AssetLoadingTask} to the task stack for the given asset. */
-	private void addTask (AssetDescriptor assetDesc) {
+	void addTask (AssetDescriptor assetDesc) {
 		AssetLoader loader = getLoader(assetDesc.type, assetDesc.fileName);
 		if (loader == null) throw new GdxRuntimeException("No loader for type: " + ClassReflection.getSimpleName(assetDesc.type));
 		tasks.push(new AssetLoadingTask(this, assetDesc, loader, executor));
@@ -553,7 +553,7 @@ public class AssetManager implements Disposable {
 
 	/** Updates the current task on the top of the task stack.
 	 * @return true if the asset is loaded or the task was cancelled. */
-	private boolean updateTask () {
+	boolean updateTask () {
 		AssetLoadingTask task = tasks.peek();
 
 		boolean complete = true;
@@ -609,7 +609,7 @@ public class AssetManager implements Disposable {
 
 	/** Handles a runtime/loading error in {@link #update()} by optionally invoking the {@link AssetErrorListener}.
 	 * @param t */
-	private void handleTaskError (Throwable t) {
+	void handleTaskError (Throwable t) {
 		log.error("Error loading asset.", t);
 
 		if (tasks.isEmpty()) throw new GdxRuntimeException(t);

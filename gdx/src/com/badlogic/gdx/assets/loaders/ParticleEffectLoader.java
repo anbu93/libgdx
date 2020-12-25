@@ -54,6 +54,11 @@ public class ParticleEffectLoader extends SynchronousAssetLoader<ParticleEffect,
 		return deps;
 	}
 
+	@Override
+	public boolean hasDependencies() {
+		return true;
+	}
+
 	/** Parameter to be passed to {@link AssetManager#load(String, Class, AssetLoaderParameters)} if additional configuration is
 	 * necessary for the {@link ParticleEffect}. */
 	public static class ParticleEffectParameter extends AssetLoaderParameters<ParticleEffect> {

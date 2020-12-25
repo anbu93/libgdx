@@ -173,4 +173,8 @@ class AssetLoadingTask implements AsyncTask<Void> {
 		}
 		array.ordered = ordered;
 	}
+
+	public boolean hasDependencies() {
+		return loader.hasDependencies();
+	}
 }

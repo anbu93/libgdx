@@ -31,6 +31,7 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.GdxRuntimeException;
+import com.badlogic.gdx.utils.ObjectMap;
 
 /** {@link AssetLoader} for {@link BitmapFont} instances. Loads the font description file (.fnt) asynchronously, loads the
  * {@link Texture} containing the glyphs as a dependency. The {@link BitmapFontParameter} allows you to set things like texture
@@ -41,22 +42,27 @@ public class BitmapFontLoader extends AsynchronousAssetLoader<BitmapFont, Bitmap
 		super(resolver);
 	}
 
-	BitmapFontData data;
+	public static class BitmapFontLoaderInfo {
+		BitmapFontData data;
+	}
+	ObjectMap<String, BitmapFontLoaderInfo> infoMap = new ObjectMap<String, BitmapFontLoaderInfo>();
 
 	@Override
 	public Array<AssetDescriptor> getDependencies (String fileName, FileHandle file, BitmapFontParameter parameter) {
+		if (!infoMap.containsKey(fileName)) infoMap.put(fileName, new BitmapFontLoaderInfo());
+		BitmapFontLoaderInfo info = infoMap.get(fileName);
 		Array<AssetDescriptor> deps = new Array();
 		if (parameter != null && parameter.bitmapFontData != null) {
-			data = parameter.bitmapFontData;
+			info.data = parameter.bitmapFontData;
 			return deps;
 		}
 
-		data = new BitmapFontData(file, parameter != null && parameter.flip);
+		info.data = new BitmapFontData(file, parameter != null && parameter.flip);
 		if (parameter != null && parameter.atlasName != null) {
 			deps.add(new AssetDescriptor(parameter.atlasName, TextureAtlas.class));
 		} else {
-			for (int i = 0; i < data.getImagePaths().length; i++) {
-				String path = data.getImagePath(i);
+			for (int i = 0; i < info.data.getImagePaths().length; i++) {
+				String path = info.data.getImagePath(i);
 				FileHandle resolved = resolve(path);
 
 				TextureLoader.TextureParameter textureParams = new TextureLoader.TextureParameter();
@@ -76,26 +82,34 @@ public class BitmapFontLoader extends AsynchronousAssetLoader<BitmapFont, Bitmap
 	}
 
 	@Override
+	public boolean hasDependencies() {
+		return true;
+	}
+
+	@Override
 	public void loadAsync (AssetManager manager, String fileName, FileHandle file, BitmapFontParameter parameter) {
 	}
 
 	@Override
 	public BitmapFont loadSync (AssetManager manager, String fileName, FileHandle file, BitmapFontParameter parameter) {
+		BitmapFontLoaderInfo info = infoMap.get(fileName);
 		if (parameter != null && parameter.atlasName != null) {
 			TextureAtlas atlas = manager.get(parameter.atlasName, TextureAtlas.class);
-			String name = file.sibling(data.imagePaths[0]).nameWithoutExtension().toString();
+			String name = file.sibling(info.data.imagePaths[0]).nameWithoutExtension().toString();
 			AtlasRegion region = atlas.findRegion(name);
 
 			if (region == null)
 				throw new GdxRuntimeException("Could not find font region " + name + " in atlas " + parameter.atlasName);
+			infoMap.remove(fileName);
 			return new BitmapFont(file, region);
 		} else {
-			int n = data.getImagePaths().length;
+			int n = info.data.getImagePaths().length;
 			Array<TextureRegion> regs = new Array(n);
 			for (int i = 0; i < n; i++) {
-				regs.add(new TextureRegion(manager.get(data.getImagePath(i), Texture.class)));
+				regs.add(new TextureRegion(manager.get(info.data.getImagePath(i), Texture.class)));
 			}
-			return new BitmapFont(data, regs, true);
+			infoMap.remove(fileName);
+			return new BitmapFont(info.data, regs, true);
 		}
 	}
 

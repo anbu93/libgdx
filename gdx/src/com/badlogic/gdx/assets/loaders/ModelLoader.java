@@ -96,6 +96,11 @@ public abstract class ModelLoader<P extends ModelLoader.ModelParameters> extends
 	}
 
 	@Override
+	public boolean hasDependencies() {
+		return true;
+	}
+
+	@Override
 	public void loadAsync (AssetManager manager, String fileName, FileHandle file, P parameters) {
 	}
 

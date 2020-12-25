@@ -12,6 +12,7 @@ import com.badlogic.gdx.graphics.Texture.TextureFilter;
 import com.badlogic.gdx.graphics.Texture.TextureWrap;
 import com.badlogic.gdx.graphics.TextureData;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.ObjectMap;
 
 /** {@link AssetLoader} for {@link Cubemap} instances. The pixel data is loaded asynchronously. The texture is then created on the
  * rendering thread, synchronously. Passing a {@link CubemapParameter} to
@@ -25,7 +26,7 @@ public class CubemapLoader extends AsynchronousAssetLoader<Cubemap, CubemapLoade
 		Cubemap cubemap;
 	};
 
-	CubemapLoaderInfo info = new CubemapLoaderInfo();
+	private ObjectMap<String, CubemapLoaderInfo> infoMap = new ObjectMap<String, CubemapLoaderInfo>();
 
 	public CubemapLoader (FileHandleResolver resolver) {
 		super(resolver);
@@ -33,6 +34,8 @@ public class CubemapLoader extends AsynchronousAssetLoader<Cubemap, CubemapLoade
 
 	@Override
 	public void loadAsync (AssetManager manager, String fileName, FileHandle file, CubemapParameter parameter) {
+		if (!infoMap.containsKey(fileName)) infoMap.put(fileName, new CubemapLoaderInfo());
+		CubemapLoaderInfo info = infoMap.get(fileName);
 		info.filename = fileName;
 		if (parameter == null || parameter.cubemapData == null) {
 			Pixmap pixmap = null;
@@ -53,6 +56,7 @@ public class CubemapLoader extends AsynchronousAssetLoader<Cubemap, CubemapLoade
 
 	@Override
 	public Cubemap loadSync (AssetManager manager, String fileName, FileHandle file, CubemapParameter parameter) {
+		CubemapLoaderInfo info = infoMap.get(fileName);
 		if (info == null) return null;
 		Cubemap cubemap = info.cubemap;
 		if (cubemap != null) {
@@ -64,6 +68,7 @@ public class CubemapLoader extends AsynchronousAssetLoader<Cubemap, CubemapLoade
 			cubemap.setFilter(parameter.minFilter, parameter.magFilter);
 			cubemap.setWrap(parameter.wrapU, parameter.wrapV);
 		}
+		infoMap.remove(fileName);
 		return cubemap;
 	}
 

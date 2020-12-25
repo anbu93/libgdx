@@ -26,6 +26,7 @@ import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas.TextureAtlasData;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas.TextureAtlasData.Page;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.ObjectMap;
 
 /** {@link AssetLoader} to load {@link TextureAtlas} instances. Passing a {@link TextureAtlasParameter} to
  * {@link AssetManager#load(String, Class, AssetLoaderParameters)} allows to specify whether the atlas regions should be flipped
@@ -36,29 +37,35 @@ public class TextureAtlasLoader extends SynchronousAssetLoader<TextureAtlas, Tex
 		super(resolver);
 	}
 
-	TextureAtlasData data;
+	ObjectMap<String, TextureAtlasData> dataMap = new ObjectMap<String, TextureAtlasData>();
 
 	@Override
 	public TextureAtlas load (AssetManager assetManager, String fileName, FileHandle file, TextureAtlasParameter parameter) {
-		for (Page page : data.getPages()) {
-			Texture texture = assetManager.get(page.textureFile.path().replaceAll("\\\\", "/"), Texture.class);
-			page.texture = texture;
-		}
+        TextureAtlasData data = dataMap.get(fileName);
+        if (data != null) {
+            for (Page page : data.getPages()) {
+                Texture texture = assetManager.get(page.textureFile.path().replaceAll("\\\\", "/"), Texture.class);
+                page.texture = texture;
+            }
 
-	 	TextureAtlas atlas = new TextureAtlas(data);
- 		data = null;
- 		return atlas;
+            TextureAtlas atlas = new TextureAtlas(data);
+            dataMap.remove(fileName);
+            return atlas;
+        }
+        return null;
 	}
 
 	@Override
 	public Array<AssetDescriptor> getDependencies (String fileName, FileHandle atlasFile, TextureAtlasParameter parameter) {
 		FileHandle imgDir = atlasFile.parent();
 
-		if (parameter != null)
+        TextureAtlasData data;
+        if (parameter != null)
 			data = new TextureAtlasData(atlasFile, imgDir, parameter.flip);
 		else {
 			data = new TextureAtlasData(atlasFile, imgDir, false);
 		}
+		dataMap.put(fileName, data);
 
 		Array<AssetDescriptor> dependencies = new Array();
 		for (Page page : data.getPages()) {
@@ -70,6 +77,11 @@ public class TextureAtlasLoader extends SynchronousAssetLoader<TextureAtlas, Tex
 			dependencies.add(new AssetDescriptor(page.textureFile, Texture.class, params));
 		}
 		return dependencies;
+	}
+
+	@Override
+	public boolean hasDependencies() {
+		return true;
 	}
 
 	static public class TextureAtlasParameter extends AssetLoaderParameters<TextureAtlas> {

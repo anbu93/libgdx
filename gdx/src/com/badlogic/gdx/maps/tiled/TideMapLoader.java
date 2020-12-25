@@ -48,7 +48,7 @@ public class TideMapLoader extends SynchronousAssetLoader<TiledMap, TideMapLoade
 	}
 
 	private XmlReader xml = new XmlReader();
-	private Element root;
+	private ObjectMap<String, Element> rootMap = new ObjectMap<String, Element>();
 
 	public TideMapLoader () {
 		super(new InternalFileHandleResolver());
@@ -61,7 +61,7 @@ public class TideMapLoader extends SynchronousAssetLoader<TiledMap, TideMapLoade
 	public TiledMap load (String fileName) {
 		try {
 			FileHandle tideFile = resolve(fileName);
-			root = xml.parse(tideFile);
+			Element root = xml.parse(tideFile);
 			ObjectMap<String, Texture> textures = new ObjectMap<String, Texture>();
 			for (FileHandle textureFile : loadTileSheets(root, tideFile)) {
 				textures.put(textureFile.path(), new Texture(textureFile));
@@ -79,7 +79,10 @@ public class TideMapLoader extends SynchronousAssetLoader<TiledMap, TideMapLoade
 	@Override
 	public TiledMap load (AssetManager assetManager, String fileName, FileHandle tideFile, Parameters parameter) {
 		try {
-			return loadMap(root, tideFile, new AssetManagerImageResolver(assetManager));
+			Element root = rootMap.get(fileName);
+			TiledMap result = loadMap(root, tideFile, new AssetManagerImageResolver(assetManager));
+			rootMap.remove(fileName);
+			return result;
 		} catch (Exception e) {
 			throw new GdxRuntimeException("Couldn't load tilemap '" + fileName + "'", e);
 		}
@@ -89,7 +92,8 @@ public class TideMapLoader extends SynchronousAssetLoader<TiledMap, TideMapLoade
 	public Array<AssetDescriptor> getDependencies (String fileName, FileHandle tmxFile, Parameters parameter) {
 		Array<AssetDescriptor> dependencies = new Array<AssetDescriptor>();
 		try {
-			root = xml.parse(tmxFile);
+			Element root = xml.parse(tmxFile);
+			rootMap.put(fileName, root);
 			for (FileHandle image : loadTileSheets(root, tmxFile)) {
 				dependencies.add(new AssetDescriptor(image.path(), Texture.class));
 			}
@@ -97,6 +101,11 @@ public class TideMapLoader extends SynchronousAssetLoader<TiledMap, TideMapLoade
 		} catch (IOException e) {
 			throw new GdxRuntimeException("Couldn't load tilemap '" + fileName + "'", e);
 		}
+	}
+
+	@Override
+	public boolean hasDependencies() {
+		return true;
 	}
 
 	/** Loads the map data, given the XML root element and an {@link ImageResolver} used to return the tileset Textures

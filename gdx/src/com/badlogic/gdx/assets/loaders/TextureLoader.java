@@ -26,6 +26,7 @@ import com.badlogic.gdx.graphics.Texture.TextureFilter;
 import com.badlogic.gdx.graphics.Texture.TextureWrap;
 import com.badlogic.gdx.graphics.TextureData;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.ObjectMap;
 
 /** {@link AssetLoader} for {@link Texture} instances. The pixel data is loaded asynchronously. The texture is then created on the
  * rendering thread, synchronously. Passing a {@link TextureParameter} to
@@ -38,8 +39,7 @@ public class TextureLoader extends AsynchronousAssetLoader<Texture, TextureLoade
 		TextureData data;
 		Texture texture;
 	};
-
-	TextureLoaderInfo info = new TextureLoaderInfo();
+	ObjectMap<String, TextureLoaderInfo> infoMap = new ObjectMap<String, TextureLoaderInfo>();
 
 	public TextureLoader (FileHandleResolver resolver) {
 		super(resolver);
@@ -47,6 +47,8 @@ public class TextureLoader extends AsynchronousAssetLoader<Texture, TextureLoade
 
 	@Override
 	public void loadAsync (AssetManager manager, String fileName, FileHandle file, TextureParameter parameter) {
+		if (!infoMap.containsKey(fileName)) infoMap.put(fileName, new TextureLoaderInfo());
+		TextureLoaderInfo info = infoMap.get(fileName);
 		info.filename = fileName;
 		if (parameter == null || parameter.textureData == null) {
 			Format format = null;
@@ -69,6 +71,7 @@ public class TextureLoader extends AsynchronousAssetLoader<Texture, TextureLoade
 
 	@Override
 	public Texture loadSync (AssetManager manager, String fileName, FileHandle file, TextureParameter parameter) {
+		TextureLoaderInfo info = infoMap.get(fileName);
 		if (info == null) return null;
 		Texture texture = info.texture;
 		if (texture != null) {
@@ -80,6 +83,7 @@ public class TextureLoader extends AsynchronousAssetLoader<Texture, TextureLoade
 			texture.setFilter(parameter.minFilter, parameter.magFilter);
 			texture.setWrap(parameter.wrapU, parameter.wrapV);
 		}
+		infoMap.remove(fileName);
 		return texture;
 	}
 
